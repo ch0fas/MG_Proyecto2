@@ -11,15 +11,9 @@ class DB_Queries:
     def __init__(self):
         load_dotenv()
 
-<<<<<<< HEAD
         self.uri = os.getenv('URI')
         self.user = os.getenv('USER')
         self.password = os.getenv('PASSWORD')
-=======
-        self.uri = 'bolt://localhost:7686'
-        self.user = 'neo5j'
-        self.password = '123456789'
->>>>>>> 0bf3bde5804cf8b8e52f64b3bdffb25fae9d3a22
         # Autentificar
         self.driver = GraphDatabase.driver(self.uri, auth = (self.user, self.password))
         
