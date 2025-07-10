@@ -8,7 +8,7 @@ from IPython.display import display
 # Crear una clase que contenga las queries de la base de datos
 class DB_Queries:
     # Inicializar nuestra clase con las credenciales
-    def __init__(self):
+    def __init__(self, database):
         load_dotenv()
 
         self.uri = os.getenv('URI')
@@ -16,7 +16,8 @@ class DB_Queries:
         self.password = os.getenv('PASSWORD')
         # Autentificar
         self.driver = GraphDatabase.driver(self.uri, auth = (self.user, self.password))
-        
+        self.database = database
+           
         try: 
             self.driver.verify_connectivity()           # Comprobar la conexión
             print('Successfully Connected to Neo4j!')
@@ -26,7 +27,7 @@ class DB_Queries:
         # Establecer la conexión con GraphDataScience
         try: 
             self.gds = GraphDataScience(self.uri, auth=(self.user, self.password))
-            #    gds.set_database('neo4j')
+            self.gds.set_database(self.database)
             test = self.gds.run_cypher('RETURN 1 AS Prueba')
             if test['Prueba'].iloc[0] == 1:
                 print('Successfully Connected to GraphDataScience!')
@@ -36,7 +37,7 @@ class DB_Queries:
             return print(f'Connection failed to GraphDataScience: {e}')
 
         # Inicializar sesión
-        self.session = self.driver.session()
+        self.session = self.driver.session(database=self.database)
 
     def count_nodes(self, node):
         query = f""" MATCH (n:{node})
