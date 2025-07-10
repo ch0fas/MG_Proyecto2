@@ -4,6 +4,8 @@ import pandas as pd
 import os
 from dotenv import load_dotenv
 from IPython.display import display
+import warnings
+warnings.filterwarnings('ignore')
 
 # Crear una clase que contenga las queries de la base de datos
 class DB_Queries:
@@ -47,6 +49,10 @@ class DB_Queries:
         result = self.session.run(query)
         return print(result.data())
 
+    def node_attributes(self):
+        query ='CALL db.schema.nodeTypeProperties'
+        return self.gds.run_cypher(query)
+
     def count_relationships(self, rel):
         query = f"""MATCH () -[r:{rel}]-> ()
         RETURN COUNT(DISTINCT(r)) as {rel}_Count;
@@ -55,6 +61,10 @@ class DB_Queries:
         result = self.session.run(query)
         return print(result.data())
     
+    def rel_attributes(self):
+        query ='CALL db.schema.relTypeProperties'
+        return self.gds.run_cypher(query)
+
     def find_attributes(self, node, attributes, limit=10):
         try:
             # Contabilizar cuántos elementos hay en la lista 
