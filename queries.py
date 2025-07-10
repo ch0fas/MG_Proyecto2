@@ -20,7 +20,7 @@ class DB_Queries:
            
         try: 
             self.driver.verify_connectivity()           # Comprobar la conexión
-            print('Successfully Connected to Neo4j!')
+            print(f'Successfully Connected to Neo4j in {self.database} database!')
         except Exception as e:
             return print(f'Connection failed to Neo4j: {e}')
         
@@ -30,7 +30,7 @@ class DB_Queries:
             self.gds.set_database(self.database)
             test = self.gds.run_cypher('RETURN 1 AS Prueba')
             if test['Prueba'].iloc[0] == 1:
-                print('Successfully Connected to GraphDataScience!')
+                print(f'Successfully Connected to GraphDataScience in {self.database} database!')
             else: 
                 print('Error connecting to GraphDataScience.')
         except Exception as e:
