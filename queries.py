@@ -3,6 +3,7 @@ from graphdatascience import GraphDataScience
 import pandas as pd
 import os
 from dotenv import load_dotenv
+from IPython.display import display
 
 # Crear una clase que contenga las queries de la base de datos
 class DB_Queries:
@@ -283,6 +284,41 @@ class DB_Queries:
                 self.session.run(query)
                 print(f'{dir} Delta Pathing for {source} added!')
                 print(self.gds.run_cypher(test))
+                print()
+
+        except Exception as e:
+            return f'An error occured: {e}'
+
+    def dijkstra(self, node, attr, source, target, weight):
+        try:
+            orientations = ['Directed', 'Undirected']
+            fix_source  = source.replace(" ", "_")
+            fix_target  = target.replace(" ", "_")
+
+            for dir in orientations: 
+                test = f"""MATCH (m) -[r:Dijkstra_{fix_source}_to_{fix_target}_{dir}]-> (n)             // Encontrar todos los nodos con Dijkstra
+                MATCH (v:{node})
+                WHERE id(v) IN r.nodeIds                                                          // Encontrar los villanos que pertenecen a la red
+                RETURN m.{attr} AS Source, COLLECT(v.{attr}) AS Bridges, 
+                r.costs AS Partial_Costs, r.totalCost AS Total_Cost, n.{attr} AS Target;
+                """
+
+                query = f"""MATCH (source: {node} {{ {attr}: '{source}'}} ),
+                (target: {node} {{ {attr}: '{target}'}} )
+                CALL gds.shortestPath.dijkstra.write('{dir}_{node}', {{
+                    sourceNode: source,
+                    targetNodes: target,
+                    relationshipWeightProperty: '{weight}',
+                    writeRelationshipType: 'Dijkstra_{fix_source}_to_{fix_target}_{dir}',
+                    writeNodeIds: true,
+                    writeCosts: true
+                }})
+                YIELD relationshipsWritten
+                RETURN relationshipsWritten;
+                """
+                self.session.run(query)
+                print(f'{dir} Dijkstra Pathing for {source} to {target} added!')
+                display(self.gds.run_cypher(test))
                 print()
 
         except Exception as e:
