@@ -46,8 +46,7 @@ class DB_Queries:
         RETURN COUNT(DISTINCT(n)) AS {node}s
         """
 
-        result = self.session.run(query)
-        return print(result.data())
+        return self.gds.run_cypher(query)
 
     def node_attributes(self):
         query ='CALL db.schema.nodeTypeProperties'
@@ -58,8 +57,7 @@ class DB_Queries:
         RETURN COUNT(DISTINCT(r)) as {rel}_Count;
         """
 
-        result = self.session.run(query)
-        return print(result.data())
+        return self.gds.run_cypher(query)
     
     def rel_attributes(self):
         query ='CALL db.schema.relTypeProperties'
