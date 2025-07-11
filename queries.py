@@ -41,6 +41,12 @@ class DB_Queries:
         # Inicializar sesión
         self.session = self.driver.session(database=self.database)
 
+    def custom_query(self, query):
+        try:
+            self.gds.run_cypher(query)
+        except Exception as e:
+            return print(f'Error with query: {e}')
+
     def count_nodes(self, node):
         query = f""" MATCH (n:{node})
         RETURN COUNT(DISTINCT(n)) AS {node}s
