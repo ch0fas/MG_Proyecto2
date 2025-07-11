@@ -10,7 +10,7 @@ warnings.filterwarnings('ignore')
 # Crear una clase que contenga las queries de la base de datos
 class DB_Queries:
     # Inicializar nuestra clase con las credenciales
-    def __init__(self, database):
+    def __init__(self, database='neo4j'):
         load_dotenv()
 
         self.uri = os.getenv('URI')
@@ -275,7 +275,10 @@ class DB_Queries:
 
             for dir in orientations: 
                 test = f"""MATCH (n:{node} {{ {attr}: '{source}' }}) -[r:PATH_{fix_source}_{dir}]-> (m:{node})
-                RETURN n.{attr}, r.nodeIds, r.costs, r.totalCost, m.{attr}
+                MATCH (v:{node})
+                WHERE id(v) IN r.nodeIds 
+                RETURN n.{attr} AS Source, COLLECT(v.{attr}) AS Bridges, r.costs AS Partial_Costs, 
+                r.totalCost AS Total_Cost, m.{attr} AS Target
                 LIMIT 3;
                 """
 
@@ -292,7 +295,7 @@ class DB_Queries:
                 """
                 self.session.run(query)
                 print(f'{dir} Delta Pathing for {source} added!')
-                print(self.gds.run_cypher(test))
+                display(self.gds.run_cypher(test))
                 print()
 
         except Exception as e:
@@ -307,7 +310,7 @@ class DB_Queries:
             for dir in orientations: 
                 test = f"""MATCH (m) -[r:Dijkstra_{fix_source}_to_{fix_target}_{dir}]-> (n)             // Encontrar todos los nodos con Dijkstra
                 MATCH (v:{node})
-                WHERE id(v) IN r.nodeIds                                                          // Encontrar los villanos que pertenecen a la red
+                WHERE id(v) IN r.nodeIds                                                                // Encontrar los nodos que pertenecen a la red
                 RETURN m.{attr} AS Source, COLLECT(v.{attr}) AS Bridges, 
                 r.costs AS Partial_Costs, r.totalCost AS Total_Cost, n.{attr} AS Target;
                 """
