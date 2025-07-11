@@ -18,7 +18,7 @@ EGY,Egypt,Africa
 GNQ,Equatorial Guinea,Africa
 ETH,Ethiopia,Africa
 GAB,Gabon,Africa
-GMB,The Gambia,Africa
+GMB,Gambia,Africa
 GHA,Ghana,Africa
 GIN,Guinea,Africa
 GNB,Guinea-Bissau,Africa
@@ -216,3 +216,9 @@ SUR,Suriname,America
 URY,Uruguay,America
 VEN,Venezuela,America
 TWN,Taiwan,Asia
+COK,Cook Islands,Oceania
+NIU,Niue,Oceania
+CPV,Cape Verde,Africa
+,Mayotte,Africa
+REU,Reunion,Africa
+,Jersey,Europe
