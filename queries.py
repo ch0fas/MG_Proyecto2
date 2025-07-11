@@ -11,11 +11,11 @@ warnings.filterwarnings('ignore')
 class DB_Queries:
     # Inicializar nuestra clase con las credenciales
     def __init__(self, database='neo4j'):
-        load_dotenv()
+        #load_dotenv()
 
-        self.uri = os.getenv('URI')
-        self.user = os.getenv('USER')
-        self.password = os.getenv('PASSWORD')
+        self.uri = 'bolt://localhost:7687'
+        self.user = 'neo4j'
+        self.password = '123456789'
         # Autentificar
         self.driver = GraphDatabase.driver(self.uri, auth = (self.user, self.password))
         self.database = database
