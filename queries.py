@@ -43,7 +43,7 @@ class DB_Queries:
 
     def custom_query(self, query):
         try:
-            self.gds.run_cypher(query)
+            return self.gds.run_cypher(query)
         except Exception as e:
             return print(f'Error with query: {e}')
 
