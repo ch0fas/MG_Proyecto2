@@ -377,6 +377,8 @@ class DB_Queries:
                 # a little too much para implementar, lo intento mañana
 
                 # (no sé cómo decirle q seleccione el q tenga menor kilometros)
+
+                
         except Exception as e:
             return f'An error occured: {e}'
 
