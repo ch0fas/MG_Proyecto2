@@ -406,7 +406,29 @@ class DB_Queries:
             pair_df_sorted = pair_df.sort_values(by='distance')
             df_final = pair_df_sorted.drop_duplicates(subset=['src','dst'], keep='first')
             
+            permuts = list(itertools.permutations(seven_wonders))
+
+            lookup = {(row.Source, row.Target): row.Distance for row in df_final.itertuples(index=False)}
+            print(lookup)
+
+            distances = pd.DataFrame(columns=['order','distance'])
+            for i in permuts:
+                pre_distance = 0
                 
+                for x in range(6):
+                    par = (i[x], i[x+1])
+                    dist = lookup.get(par)
+                    pre_distance += dist
+
+                temp_df = pd.DataFrame({
+                    "order": [i],
+                    "distance": pre_distance
+
+                })
+                distances = pd.concat([distances,temp_df], sort=False)
+
+            return distances
+                            
         except Exception as e:
             return f'An error occured: {e}'
 
