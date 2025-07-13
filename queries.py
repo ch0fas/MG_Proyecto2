@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 from IPython.display import display
 import warnings
+import time
 warnings.filterwarnings('ignore')
 
 # Crear una clase que contenga las queries de la base de datos
@@ -288,6 +289,17 @@ class DB_Queries:
                 LIMIT 3;
                 """
 
+                # Checar si existe el camino
+                exists_query = f"MATCH  (n:{node}) -[r:PATH_{fix_source}_{dir}]- (m:{node}) RETURN COUNT(r) > 0 AS exists"
+                result = self.session.run(exists_query)
+                exists = result.single()["exists"]
+
+                # Saltar la creación en caso de que el camino exista
+                if exists: 
+                    print(f'{dir} Delta Pathing for {source} already exists. Creation skipped.')
+                    display(self.gds.run_cypher(test))
+                    continue
+
                 query = f"""MATCH (source: {node}{{ {attr}: '{source}' }})
                 CALL gds.allShortestPaths.delta.write('{dir}_{node}', {{
                     sourceNode: source,
@@ -301,6 +313,7 @@ class DB_Queries:
                 """
                 self.session.run(query)
                 print(f'{dir} Delta Pathing for {source} added!')
+                time.sleep(3)                                 # Esperar a que se añadan las relaciones
                 display(self.gds.run_cypher(test))
                 print()
 
@@ -321,6 +334,17 @@ class DB_Queries:
                 r.costs AS Partial_Costs, r.totalCost AS Total_Cost, n.{attr} AS Target;
                 """
 
+                # Checar si existe el camino
+                exists_query = f"MATCH  (n:{node}) -[r:Dijkstra_{fix_source}_to_{fix_target}_{dir}]- (m:{node}) RETURN COUNT(r) > 0 AS exists"
+                result = self.session.run(exists_query)
+                exists = result.single()["exists"]
+
+                # Saltar la creación en caso de que el camino exista
+                if exists: 
+                    print(f'{dir} Dijkstra Pathing for {source} to {target} already exists. Creation skipped.')
+                    display(self.gds.run_cypher(test))
+                    continue
+
                 query = f"""MATCH (source: {node} {{ {attr}: '{source}'}} ),
                 (target: {node} {{ {attr}: '{target}'}} )
                 CALL gds.shortestPath.dijkstra.write('{dir}_{node}', {{
@@ -336,6 +360,7 @@ class DB_Queries:
                 """
                 self.session.run(query)
                 print(f'{dir} Dijkstra Pathing for {source} to {target} added!')
+                time.sleep(3)
                 display(self.gds.run_cypher(test))
                 print()
 
