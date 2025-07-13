@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from IPython.display import display
 import warnings
 import time
+import itertools
 warnings.filterwarnings('ignore')
 
 # Crear una clase que contenga las queries de la base de datos
@@ -367,17 +368,44 @@ class DB_Queries:
         except Exception as e:
             return f'An error occured: {e}'
 
-    def seven_wonders_best_route(self, node, attr, source, weight):
+    def temp_dijkstra_directed(self, node, attr, source, target, weight):
         try:
+            query = f"""MATCH (source: {node} {{ {attr}: '{source}'}} ),
+            (target: {node} {{ {attr}: '{target}'}} )
+            CALL gds.shortestPath.dijkstra.stream('Directed_{node}', {{
+                sourceNode: source,
+                targetNodes: target,
+                relationshipWeightProperty: '{weight}',
+            }})
+            YIELD sourceNode, targetNode, totalCost, nodeIds
+            RETURN gds.util.asNode(sourceNode).{attr} AS Source, 
+            gds.util.asNode(targetNode).{attr} AS Target, nodeIds AS Middle, totalCost AS Distance;
+            """
+            return self.gds.run_cypher(query)
+
+        except Exception as e:
+            return f'An error occured: {e}'
+        
+    def seven_wonders_best_route(self, node, attr, source, weight):         # Source es el aeropuerto inicial (Colombia)
+        try:
+            # Establecer los aeropuertos destino que contengan las 7 maravillas
             seven_wonders = ['Cairo', 'Rome', 'Beijing', 'Merida', 'Cuzco', 'Lucknow', 'Rio De Janeiro']
-            for i in seven_wonders:
-                self.dijkstra(node, attr, source, i, weight)
-                # Estoy pensando en ejecutar el algoritmo de dijkstra con cada "i" como el target, 
-                # y después seleccionar el destino con la menor distancia, pero sería... damn,
-                # a little too much para implementar, lo intento mañana
+            # Realizar pares para ejecutar dijkstra (aquí iría el source? @Sofi)
+            pairs = list(itertools.permutations(seven_wonders,2))
 
-                # (no sé cómo decirle q seleccione el q tenga menor kilometros)
+            # Dataframe concatenado 
+            pair_df = pd.DataFrame(columns=['Source','Target','Middle','Distance'])
+            print(pair_df)
 
+            for i in pairs:
+                # Ejecutar el algoritmo y almacenar la respuesta
+                answer = self.temp_dijkstra_directed(node, attr, source=i[0], target=i[1], weight=weight)
+                pair_df = pd.concat([pair_df,answer], sort=False)
+
+            # Dataframe con todas las combinaciones
+            pair_df_sorted = pair_df.sort_values(by='distance')
+            df_final = pair_df_sorted.drop_duplicates(subset=['src','dst'], keep='first')
+            
                 
         except Exception as e:
             return f'An error occured: {e}'
