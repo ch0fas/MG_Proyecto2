@@ -367,6 +367,19 @@ class DB_Queries:
         except Exception as e:
             return f'An error occured: {e}'
 
+    def seven_wonders_best_route(self, node, attr, source, weight):
+        try:
+            seven_wonders = ['Cairo', 'Rome', 'Beijing', 'Merida', 'Cuzco', 'Lucknow', 'Rio De Janeiro']
+            for i in seven_wonders:
+                self.dijkstra(node, attr, source, i, weight)
+                # Estoy pensando en ejecutar el algoritmo de dijkstra con cada "i" como el target, 
+                # y después seleccionar el destino con la menor distancia, pero sería... damn,
+                # a little too much para implementar, lo intento mañana
+
+                # (no sé cómo decirle q seleccione el q tenga menor kilometros)
+        except Exception as e:
+            return f'An error occured: {e}'
+
     def close(self):
         self.session.close()
         self.driver.close()
