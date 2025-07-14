@@ -7,6 +7,7 @@ from IPython.display import display
 import warnings
 import time
 import itertools
+pd.set_option('display.max_colwidth', None)
 warnings.filterwarnings('ignore')
 
 # Crear una clase que contenga las queries de la base de datos
@@ -390,59 +391,53 @@ class DB_Queries:
         try:
             # Establecer los aeropuertos destino que contengan las 7 maravillas
             seven_wonders = ['Cairo', 'Rome', 'Beijing', 'Merida', 'Cuzco', 'Lucknow', 'Rio De Janeiro']
-            # Realizar pares para ejecutar dijkstra (aquí iría el source? @Sofi)
-            pairs = list(itertools.permutations(seven_wonders,2))
+            # Realizar pares para ejecutar dijkstra 
+            routes = seven_wonders + [starting_point]
+            pairs = list(itertools.permutations(routes,2))
 
             # Calcular distancias entre origen y las 7 maravillas
             origin_to_wonder = pd.DataFrame(columns=['Source','Target','Middle','Distance'])
 
-            for i in pairs:
+            # Separar por origen y destino
+            for src, tgt in pairs:
                 #Ejecutar el algoritmo y almacenar la respuesta
-                answer = self.temp_dijkstra_directed(node,attr,source=i[0],target=i[1], weight=weight)
-                origin_to_wonder = pd.concat([origin_to_wonder,answer],sort=False)
-
-            # Dataframe concatenado 
-            pair_df = pd.DataFrame(columns=['Source','Target','Middle','Distance'])
-
-            for i in pairs:
-                # Ejecutar el algoritmo y almacenar la respuesta
-                answer = self.temp_dijkstra_directed(node, attr, source=i[0], target=i[1], weight=weight)
-                pair_df = pd.concat([pair_df,answer], sort=False)
-
-            # Dataframe con todas las combinaciones
-            pair_df_sorted = pair_df.sort_values(by='Distance')
-            df_final = pair_df_sorted.drop_duplicates(subset=['Source','Target'], keep='first')
+                answer = self.temp_dijkstra_directed(node,attr,source=src,target=tgt, weight=weight)
+                origin_to_wonder = pd.concat([origin_to_wonder,answer],sort=False, ignore_index=True)
             
-            # Todas las posibles rutas 
+            # Diccionario para buscar los orígenes y destinos 
+            lookup = {(row.Source, row.Target): row.Distance for row in origin_to_wonder.itertuples(index=False)}
+
+            # Todas las posibles rutas hacia las 7 maravillas
             permuts = list(itertools.permutations(seven_wonders))
+            full_routes = [(starting_point,) + route for route in permuts]
 
-            lookup = {(row.Source, row.Target): row.Distance for row in df_final.itertuples(index=False)}
-
+            # Calcular las distancias
             distances = pd.DataFrame(columns=['order','distance'])
 
-            for i in permuts:
-                filtered = origin_to_wonder.loc[origin_to_wonder['Source'] == i[0], 'Distance'].values
-                if len(filtered) > 0:
-                    pre_distance = float(filtered[0])  # <-- Ensure it's a scalar
-                else:
-                    print(f"No distance from source to {i[0]}")
-                    continue
-                
-                for x in range(6):
-                    par = (i[x], i[x+1])
-                    dist = lookup.get(par)
-                    pre_distance += dist
+            for route in full_routes:
+                total_distance = 0
+                valid = True
 
-                temp_df = pd.DataFrame({
-                    "order": [i],
-                    "distance": pre_distance
+                for i in range(len(route) - 1):
+                    pair = (route[i], route[i+1])
+                    dist = lookup.get(pair)
+                    if dist is None:
+                        print(f"Missing distance for pair: {pair}")
+                        valid = False
+                        break
+                total_distance += dist
 
-                })
-                distances = pd.concat([distances,temp_df], sort=False)
+                if valid:
+                    temp_df = pd.DataFrame({
+                        'order': [route],
+                        'distance': [total_distance]
+                    })
+                    distances = pd.concat([distances, temp_df], ignore_index=True)
             
-            distances = distances.sort_values('distance', ignore_index=True)
-
-            return distances
+            # Return the best routes
+            distances = distances.sort_values('distance', ignore_index=True, ascending=False)
+            best_route = distances.head(1)
+            return best_route
                             
         except Exception as e:
             return f'An error occured: {e}'
