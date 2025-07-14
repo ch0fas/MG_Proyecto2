@@ -372,11 +372,10 @@ class DB_Queries:
         try:
             query = f"""MATCH (source: {node} {{ {attr}: '{source}'}} ),
             (target: {node} {{ {attr}: '{target}'}} )
-            
             CALL gds.shortestPath.dijkstra.stream('Directed_{node}', {{
                 sourceNode: source,
                 targetNodes: target,
-                relationshipWeightProperty: '{weight}',
+                relationshipWeightProperty: '{weight}'
             }})
             YIELD sourceNode, targetNode, totalCost, nodeIds
             RETURN gds.util.asNode(sourceNode).{attr} AS Source, 
@@ -387,7 +386,7 @@ class DB_Queries:
         except Exception as e:
             return f'An error occured: {e}'
         
-    def seven_wonders_best_route(self, node, attr, source, weight):         # Source es el aeropuerto inicial (Colombia)
+    def seven_wonders_best_route(self, node, attr, starting_point, weight):        
         try:
             # Establecer los aeropuertos destino que contengan las 7 maravillas
             seven_wonders = ['Cairo', 'Rome', 'Beijing', 'Merida', 'Cuzco', 'Lucknow', 'Rio De Janeiro']
@@ -397,14 +396,13 @@ class DB_Queries:
             # Calcular distancias entre origen y las 7 maravillas
             origin_to_wonder = pd.DataFrame(columns=['Source','Target','Middle','Distance'])
 
-            for i in seven_wonders:
+            for i in pairs:
                 #Ejecutar el algoritmo y almacenar la respuesta
-                answer = self.temp_dijkstra_directed(node,attr,source=source,target=i, weight=weight)
+                answer = self.temp_dijkstra_directed(node,attr,source=i[0],target=i[1], weight=weight)
                 origin_to_wonder = pd.concat([origin_to_wonder,answer],sort=False)
 
             # Dataframe concatenado 
             pair_df = pd.DataFrame(columns=['Source','Target','Middle','Distance'])
-            print(pair_df)
 
             for i in pairs:
                 # Ejecutar el algoritmo y almacenar la respuesta
@@ -412,20 +410,23 @@ class DB_Queries:
                 pair_df = pd.concat([pair_df,answer], sort=False)
 
             # Dataframe con todas las combinaciones
-            pair_df_sorted = pair_df.sort_values(by='distance')
-            df_final = pair_df_sorted.drop_duplicates(subset=['src','dst'], keep='first')
+            pair_df_sorted = pair_df.sort_values(by='Distance')
+            df_final = pair_df_sorted.drop_duplicates(subset=['Source','Target'], keep='first')
             
             # Todas las posibles rutas 
             permuts = list(itertools.permutations(seven_wonders))
 
-            lookup = {(row.src, row.dst): row.Distance for row in df_final.itertuples(index=False)}
-            #print(lookup)
+            lookup = {(row.Source, row.Target): row.Distance for row in df_final.itertuples(index=False)}
 
             distances = pd.DataFrame(columns=['order','distance'])
 
             for i in permuts:
-                pre_distance = origin_to_wonder.loc(origin_to_wonder['Source'] == i[0], ['Distance'])
-                print(pre_distance)
+                filtered = origin_to_wonder.loc[origin_to_wonder['Source'] == i[0], 'Distance'].values
+                if len(filtered) > 0:
+                    pre_distance = float(filtered[0])  # <-- Ensure it's a scalar
+                else:
+                    print(f"No distance from source to {i[0]}")
+                    continue
                 
                 for x in range(6):
                     par = (i[x], i[x+1])
