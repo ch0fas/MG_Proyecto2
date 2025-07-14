@@ -137,6 +137,47 @@ class DB_Queries:
         
         except Exception as e:
             return f'An error occured {e}'
+        
+    def create_subgraph_continent(self, node, rel, orientation, weight=None, continent):
+        try: 
+            # En caso de que hayan pesos o no en la relación
+            if weight: 
+                rel_block = f" {{ {rel}: {{orientation: '{orientation}', properties: '{weight}' }} }} "
+            else:
+                rel_block = f" {{ {rel}: {{orientation: '{orientation}'}} }} "
+
+            name = 'myGraph'
+            if orientation == 'NATURAL':
+                name = 'Directed'
+            elif orientation == 'REVERSE':
+                name = 'Reversed'
+            elif orientation ==  'UNDIRECTED':
+                name = 'Undirected'
+            else:
+                return f"Invalid orientation: {orientation}"
+
+            graph_name = f'{name}_{node}_{continent}_{orientation}'
+
+            # Checar si existe el subgrafo
+            exists_query = f"CALL gds.graph.exists('{graph_name}') YIELD exists"
+            result = self.session.run(exists_query)
+            exists = result.single()["exists"]
+
+            # Saltar la creación en caso de que el subgrafo exista
+            if exists: 
+                return f'Subgraph {graph_name} already exists. Creation skipped.'
+
+            # Crearlo en caso de que el subgrafo NO exista
+            query = f"""
+            MATCH (src:Airport {{continent:{continent}}})-[:TO]->(dst:Airport {{continent: {continent}}})
+            WITH gds.graph.project('{graph_name}', src,dst) AS g
+            RETURN g.graphName AS Grafo, g.nodeCount AS Nodos, g.relationshipCount AS Relaciones;
+            """
+            self.session.run(query)
+            return print(f'Successfully created {name} Subgraph with {node} nodes and {rel} relationships!')
+        
+        except Exception as e:
+            return f'An error occured {e}'
 
     def check_subgraphs(self):
         query = """CALL gds.graph.list 
