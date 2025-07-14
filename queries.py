@@ -425,7 +425,7 @@ class DB_Queries:
                         print(f"Missing distance for pair: {pair}")
                         valid = False
                         break
-                total_distance += dist
+                    total_distance += dist
 
                 if valid:
                     temp_df = pd.DataFrame({
@@ -435,7 +435,7 @@ class DB_Queries:
                     distances = pd.concat([distances, temp_df], ignore_index=True)
             
             # Return the best routes
-            distances = distances.sort_values('distance', ignore_index=True, ascending=False)
+            distances = distances.sort_values('distance', ignore_index=True)
             best_route = distances.head(1)
             return best_route
                             
