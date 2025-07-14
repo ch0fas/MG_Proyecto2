@@ -372,6 +372,7 @@ class DB_Queries:
         try:
             query = f"""MATCH (source: {node} {{ {attr}: '{source}'}} ),
             (target: {node} {{ {attr}: '{target}'}} )
+            
             CALL gds.shortestPath.dijkstra.stream('Directed_{node}', {{
                 sourceNode: source,
                 targetNodes: target,
@@ -393,6 +394,14 @@ class DB_Queries:
             # Realizar pares para ejecutar dijkstra (aquí iría el source? @Sofi)
             pairs = list(itertools.permutations(seven_wonders,2))
 
+            # Calcular distancias entre origen y las 7 maravillas
+            origin_to_wonder = pd.DataFrame(columns=['Source','Target','Middle','Distance'])
+
+            for i in seven_wonders:
+                #Ejecutar el algoritmo y almacenar la respuesta
+                answer = self.temp_dijkstra_directed(node,attr,source=source,target=i, weight=weight)
+                origin_to_wonder = pd.concat([origin_to_wonder,answer],sort=False)
+
             # Dataframe concatenado 
             pair_df = pd.DataFrame(columns=['Source','Target','Middle','Distance'])
             print(pair_df)
@@ -406,14 +415,17 @@ class DB_Queries:
             pair_df_sorted = pair_df.sort_values(by='distance')
             df_final = pair_df_sorted.drop_duplicates(subset=['src','dst'], keep='first')
             
+            # Todas las posibles rutas 
             permuts = list(itertools.permutations(seven_wonders))
 
-            lookup = {(row.Source, row.Target): row.Distance for row in df_final.itertuples(index=False)}
-            print(lookup)
+            lookup = {(row.src, row.dst): row.Distance for row in df_final.itertuples(index=False)}
+            #print(lookup)
 
             distances = pd.DataFrame(columns=['order','distance'])
+
             for i in permuts:
-                pre_distance = 0
+                pre_distance = origin_to_wonder.loc(origin_to_wonder['Source'] == i[0], ['Distance'])
+                print(pre_distance)
                 
                 for x in range(6):
                     par = (i[x], i[x+1])
@@ -426,6 +438,8 @@ class DB_Queries:
 
                 })
                 distances = pd.concat([distances,temp_df], sort=False)
+            
+            distances = distances.sort_values('distance', ignore_index=True)
 
             return distances
                             
