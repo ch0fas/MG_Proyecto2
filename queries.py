@@ -138,25 +138,11 @@ class DB_Queries:
         except Exception as e:
             return f'An error occured {e}'
         
-    def create_subgraph_continent(self, node, rel, orientation, weight=None, continent):
+    def create_subgraph_continent(self, node, rel,continent):
         try: 
             # En caso de que hayan pesos o no en la relación
-            if weight: 
-                rel_block = f" {{ {rel}: {{orientation: '{orientation}', properties: '{weight}' }} }} "
-            else:
-                rel_block = f" {{ {rel}: {{orientation: '{orientation}'}} }} "
-
-            name = 'myGraph'
-            if orientation == 'NATURAL':
-                name = 'Directed'
-            elif orientation == 'REVERSE':
-                name = 'Reversed'
-            elif orientation ==  'UNDIRECTED':
-                name = 'Undirected'
-            else:
-                return f"Invalid orientation: {orientation}"
-
-            graph_name = f'{name}_{node}_{continent}_{orientation}'
+            
+            graph_name = f'{node}_{continent}'
 
             # Checar si existe el subgrafo
             exists_query = f"CALL gds.graph.exists('{graph_name}') YIELD exists"
@@ -169,12 +155,13 @@ class DB_Queries:
 
             # Crearlo en caso de que el subgrafo NO exista
             query = f"""
-            MATCH (src:Airport {{continent:{continent}}})-[:TO]->(dst:Airport {{continent: {continent}}})
-            WITH gds.graph.project('{graph_name}', src,dst) AS g
-            RETURN g.graphName AS Grafo, g.nodeCount AS Nodos, g.relationshipCount AS Relaciones;
+            MATCH (a:Airport {{continent: '{continent}'}})-[:TO]->(a2:Airport {{continent: '{continent}'}})
+            WITH gds.graph.project('{graph_name}',a,a2) AS g
+            RETURN 
+                g.graphName, g.nodeCount, g.relationshipCount;
             """
             self.session.run(query)
-            return print(f'Successfully created {name} Subgraph with {node} nodes and {rel} relationships!')
+            return print(f'Successfully created {graph_name} Subgraph with {node} nodes and {rel} relationships!')
         
         except Exception as e:
             return f'An error occured {e}'
