@@ -137,6 +137,34 @@ class DB_Queries:
         
         except Exception as e:
             return f'An error occured {e}'
+        
+    def create_subgraph_continent(self, node, rel,continent):
+        try: 
+            # En caso de que hayan pesos o no en la relación
+            
+            graph_name = f'{node}_{continent}'
+
+            # Checar si existe el subgrafo
+            exists_query = f"CALL gds.graph.exists('{graph_name}') YIELD exists"
+            result = self.session.run(exists_query)
+            exists = result.single()["exists"]
+
+            # Saltar la creación en caso de que el subgrafo exista
+            if exists: 
+                return f'Subgraph {graph_name} already exists. Creation skipped.'
+
+            # Crearlo en caso de que el subgrafo NO exista
+            query = f"""
+            MATCH (a:Airport {{continent: '{continent}'}})-[:TO]->(a2:Airport {{continent: '{continent}'}})
+            WITH gds.graph.project('{graph_name}',a,a2) AS g
+            RETURN 
+                g.graphName, g.nodeCount, g.relationshipCount;
+            """
+            self.session.run(query)
+            return print(f'Successfully created {graph_name} Subgraph with {node} nodes and {rel} relationships!')
+        
+        except Exception as e:
+            return f'An error occured {e}'
 
     def check_subgraphs(self):
         query = """CALL gds.graph.list 
@@ -374,6 +402,24 @@ class DB_Queries:
             query = f"""MATCH (source: {node} {{ {attr}: '{source}'}} ),
             (target: {node} {{ {attr}: '{target}'}} )
             CALL gds.shortestPath.dijkstra.stream('Directed_{node}', {{
+                sourceNode: source,
+                targetNodes: target,
+                relationshipWeightProperty: '{weight}'
+            }})
+            YIELD sourceNode, targetNode, totalCost, nodeIds
+            RETURN gds.util.asNode(sourceNode).{attr} AS Source, 
+            gds.util.asNode(targetNode).{attr} AS Target, nodeIds AS Middle, totalCost AS Distance;
+            """
+            return self.gds.run_cypher(query)
+
+        except Exception as e:
+            return f'An error occured: {e}'
+        
+    def temp_dijkstra_continent(self, node, attr, source, target, weight):
+        try:
+            query = f"""MATCH (source: {node} {{ {attr}: '{source}'}} ),
+            (target: {node} {{ {attr}: '{target}'}} )
+            CALL gds.shortestPath.dijkstra.stream('Directed_Airport', {{
                 sourceNode: source,
                 targetNodes: target,
                 relationshipWeightProperty: '{weight}'
