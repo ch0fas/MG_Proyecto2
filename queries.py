@@ -401,32 +401,17 @@ class DB_Queries:
         try:
             query = f"""MATCH (source: {node} {{ {attr}: '{source}'}} ),
             (target: {node} {{ {attr}: '{target}'}} )
-            CALL gds.shortestPath.dijkstra.stream('Directed_{node}', {{
-                sourceNode: source,
-                targetNodes: target,
-                relationshipWeightProperty: '{weight}'
-            }})
-            YIELD sourceNode, targetNode, totalCost, nodeIds
-            RETURN gds.util.asNode(sourceNode).{attr} AS Source, 
-            gds.util.asNode(targetNode).{attr} AS Target, nodeIds AS Middle, totalCost AS Distance;
-            """
-            return self.gds.run_cypher(query)
-
-        except Exception as e:
-            return f'An error occured: {e}'
-        
-    def temp_dijkstra_continent(self, node, attr, source, target, weight):
-        try:
-            query = f"""MATCH (source: {node} {{ {attr}: '{source}'}} ),
-            (target: {node} {{ {attr}: '{target}'}} )
             CALL gds.shortestPath.dijkstra.stream('Directed_Airport', {{
                 sourceNode: source,
                 targetNodes: target,
                 relationshipWeightProperty: '{weight}'
             }})
             YIELD sourceNode, targetNode, totalCost, nodeIds
+            UNWIND nodeIds as id
+            MATCH (n: {node}) WHERE id(n) = id
+            WITH sourceNode, targetNode, totalCost, COLLECT(n.{attr}) AS Bridges
             RETURN gds.util.asNode(sourceNode).{attr} AS Source, 
-            gds.util.asNode(targetNode).{attr} AS Target, nodeIds AS Middle, totalCost AS Distance;
+            gds.util.asNode(targetNode).{attr} AS Target, Bridges, totalCost AS Distance;
             """
             return self.gds.run_cypher(query)
 
