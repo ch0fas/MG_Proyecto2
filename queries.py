@@ -436,37 +436,49 @@ class DB_Queries:
                 origin_to_wonder = pd.concat([origin_to_wonder,answer],sort=False, ignore_index=True)
             
             # Diccionario para buscar los orígenes y destinos 
-            lookup = {(row.Source, row.Target): row.Distance for row in origin_to_wonder.itertuples(index=False)}
+            lookup = {(row.Source, row.Target): {'Distance': row.Distance, 'Bridges': row.Bridges} 
+                      for row in origin_to_wonder.itertuples(index=False)}
 
             # Todas las posibles rutas hacia las 7 maravillas
             permuts = list(itertools.permutations(seven_wonders))
             full_routes = [(starting_point,) + route for route in permuts]
 
             # Calcular las distancias
-            distances = pd.DataFrame(columns=['order','distance'])
+            distances = pd.DataFrame(columns=['Order','Distance', 'Full_route'])
 
             for route in full_routes:
                 total_distance = 0
+                full_route_list = [starting_point]
                 valid = True
 
                 for i in range(len(route) - 1):
                     pair = (route[i], route[i+1])
-                    dist = lookup.get(pair)
-                    if dist is None:
+                    info = lookup.get(pair)
+                    if info is None:
                         print(f"Missing distance for pair: {pair}")
                         valid = False
                         break
-                    total_distance += dist
+                    total_distance += info['Distance']
+
+                    # Obtener los puentes
+                    bridges = info['Bridges']
+                    # Evitar la duplicación y unir los puentes en una sola lista
+                    if bridges and bridges[0] == full_route_list[-1]:
+                        full_route_list.extend(bridges[1:])
+                    else:
+                        full_route_list.extend(bridges)
+                    full_route_list.append(route[i+1])
 
                 if valid:
                     temp_df = pd.DataFrame({
-                        'order': [route],
-                        'distance': [total_distance]
+                        'Order': [route],
+                        'Distance': [total_distance],
+                        'Full_route': [full_route_list]
                     })
                     distances = pd.concat([distances, temp_df], ignore_index=True)
             
-            # Return the best routes
-            distances = distances.sort_values('distance', ignore_index=True)
+            # Regresar la mejor ruta
+            distances = distances.sort_values('Distance', ignore_index=True)
             best_route = distances.head(1)
             return best_route
                             
