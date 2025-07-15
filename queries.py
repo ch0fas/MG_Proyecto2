@@ -140,7 +140,6 @@ class DB_Queries:
         
     def create_subgraph_continent(self, node, rel,continent):
         try: 
-            # En caso de que hayan pesos o no en la relación
             
             graph_name = f'{node}_{continent}'
 
@@ -177,7 +176,7 @@ class DB_Queries:
     def degrees(self,node):
         try:
             # Degree
-            degree_query = f"""CALL gds.degree.write('Undirected_{node}', {{writeProperty: 'Degree'}})
+            degree_query = f"""CALL gds.degree.write('Undirected_{node}', {{writeProperty: 'Degree_{node}'}})
             YIELD centralityDistribution, nodePropertiesWritten
             RETURN centralityDistribution.min AS minimumScore, 
             centralityDistribution.mean AS meanScore, 
@@ -187,7 +186,7 @@ class DB_Queries:
             print("Degree Attribute added Successfully!")
 
             # In Degree
-            inDegree_query = f"""CALL gds.degree.write('Reversed_{node}', {{writeProperty: 'In_Degree'}})
+            inDegree_query = f"""CALL gds.degree.write('Reversed_{node}', {{writeProperty: 'In_Degree_{node}'}})
             YIELD centralityDistribution, nodePropertiesWritten
             RETURN centralityDistribution.min AS minimumScore, 
             centralityDistribution.mean AS meanScore, 
@@ -197,7 +196,7 @@ class DB_Queries:
             print("In_Degree Attribute added Successfully!")
 
             # Out Degree
-            outDegree_query = f"""CALL gds.degree.write('Directed_{node}', {{writeProperty: 'Out_Degree'}} )
+            outDegree_query = f"""CALL gds.degree.write('Directed_{node}', {{writeProperty: 'Out_Degree_{node}'}} )
             YIELD centralityDistribution, nodePropertiesWritten
             RETURN centralityDistribution.min AS minimumScore, 
             centralityDistribution.mean AS meanScore, 
@@ -213,7 +212,7 @@ class DB_Queries:
         try:
             query = f"""CALL gds.pageRank.write(
             'Directed_{node}',
-            {{writeProperty: 'Page_Rank'}} )
+            {{writeProperty: 'Page_Rank_{node}'}} )
             YIELD nodePropertiesWritten, ranIterations;
             """
             self.session.run(query)
@@ -226,7 +225,7 @@ class DB_Queries:
         try:
             query = f"""CALL gds.betweenness.write(
             'Directed_{node}', 
-            {{writeProperty: 'Betweenness' }} )
+            {{writeProperty: 'Betweenness_{node}' }} )
             YIELD centralityDistribution, nodePropertiesWritten;
             """
             self.session.run(query)
@@ -239,7 +238,7 @@ class DB_Queries:
         try:
             query = f"""CALL gds.closeness.write(
             'Directed_{node}',                       
-            {{writeProperty: 'Closeness_Centrality'}} )
+            {{writeProperty: 'Closeness_Centrality_{node}'}} )
             YIELD nodePropertiesWritten, centralityDistribution;
             """
             self.session.run(query)
