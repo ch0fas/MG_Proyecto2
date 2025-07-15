@@ -415,6 +415,24 @@ class DB_Queries:
         except Exception as e:
             return f'An error occured: {e}'
         
+    def temp_dijkstra_continent(self, node, attr, source, target, weight):
+        try:
+            query = f"""MATCH (source: {node} {{ {attr}: '{source}'}} ),
+            (target: {node} {{ {attr}: '{target}'}} )
+            CALL gds.shortestPath.dijkstra.stream('Directed_Airport', {{
+                sourceNode: source,
+                targetNodes: target,
+                relationshipWeightProperty: '{weight}'
+            }})
+            YIELD sourceNode, targetNode, totalCost, nodeIds
+            RETURN gds.util.asNode(sourceNode).{attr} AS Source, 
+            gds.util.asNode(targetNode).{attr} AS Target, nodeIds AS Middle, totalCost AS Distance;
+            """
+            return self.gds.run_cypher(query)
+
+        except Exception as e:
+            return f'An error occured: {e}'
+        
     def seven_wonders_best_route(self, node, attr, starting_point, weight):        
         try:
             # Establecer los aeropuertos destino que contengan las 7 maravillas
