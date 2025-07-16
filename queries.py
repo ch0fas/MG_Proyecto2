@@ -252,7 +252,7 @@ class DB_Queries:
             # Louvain
             louvain_query = f"""CALL gds.louvain.write(
             'Directed_{node}',
-            {{writeProperty: 'Louvain'}} )
+            {{writeProperty: 'Louvain_{node}'}} )
             YIELD communityCount, modularity, modularities;
             """
             self.session.run(louvain_query)
@@ -261,7 +261,7 @@ class DB_Queries:
             # Label Propagation
             lp_query = f"""CALL gds.labelPropagation.write(
             'Directed_{node}', 
-            {{writeProperty: 'Label_Propagation'}} )
+            {{writeProperty: 'Label_Propagation_{node}'}} )
             YIELD communityCount, ranIterations, didConverge;
             """
             self.session.run(lp_query)
@@ -270,7 +270,7 @@ class DB_Queries:
             # Triangle Count
             triangle_query = f"""CALL gds.triangleCount.write(
             'Undirected_{node}',
-            {{writeProperty: 'Triangles'}} )
+            {{writeProperty: 'Triangles_{node}'}} )
             YIELD globalTriangleCount, nodeCount;
             """
             self.session.run(triangle_query)
@@ -279,7 +279,7 @@ class DB_Queries:
             # Local Clustering Coefficient
             lcc_query = f"""CALL gds.localClusteringCoefficient.write(
             'Undirected_{node}', 
-            {{writeProperty: 'localClusteringCoefficient'}} )
+            {{writeProperty: 'localClusteringCoefficient_{node}'}} )
             YIELD averageClusteringCoefficient, nodeCount;
             """
             self.session.run(lcc_query)
@@ -287,7 +287,7 @@ class DB_Queries:
 
             # SCC
             scc_query = f"""CALL gds.scc.write(
-            'Directed_{node}', {{writeProperty: 'Community_SCC'}} )
+            'Directed_{node}', {{writeProperty: 'Community_SCC_{node}'}} )
             YIELD componentCount, componentDistribution;
             """
             self.session.run(scc_query)
@@ -295,14 +295,37 @@ class DB_Queries:
 
             # WCC
             wcc_query = f"""CALL gds.wcc.write(
-            'Undirected_{node}', {{writeProperty: 'Community_WCC'}} )
+            'Undirected_{node}', {{writeProperty: 'Community_WCC_{node}'}} )
             YIELD componentCount, componentDistribution;
             """
             self.session.run(wcc_query)
             print("Weakly CC Attribute added Successfully!")
 
+            # K1-Coloring
+            k1_color_query = f"""CALL gds.k1coloring.write(
+            'Undirected_{node}',
+            {{writeProperty: 'K1Color_{node}'}}
+            )
+            YIELD nodeCount, colorCount, ranIterations, didConverge
+            """
+            self.session.run(k1_color_query)
+            print("K1-Coloring Attribute added Successfully!")
+
         except Exception as e:
             return f'An error occured: {e}'  
+
+    def color_correction(self, node):
+        try:
+            algorithms = ['Louvain', 'Label_Propagation', 'Triangles', 'localClusteringCoefficient',
+                          'Community_SCC', 'Community_WCC', 'K1Color']
+            for i in algorithms:
+                query = f"""MATCH (n:{node})
+                SET n.{i}_{node} = n.{i}_{node} + 1
+                """
+                self.session.run(query)
+                print(f"{i} Attribute Color Corrected Successfully!")
+        except Exception as e:
+            return f'An error occured: {e}'
 
     def delta_pathing(self, node, attr, source, weight):
         try:
