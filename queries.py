@@ -438,7 +438,7 @@ class DB_Queries:
             return self.gds.run_cypher(query)
 
         except Exception as e:
-            return f'An error occured: {e}'
+            return pd.DataFrame(columns=['Source', 'Target', 'Bridges', 'Distance'])
         
     def seven_wonders_best_route(self, node, attr, starting_point, weight):        
         try:
@@ -508,7 +508,7 @@ class DB_Queries:
             return f'An error occured: {e}'
 
     def find_best_route(self, node, attr, starting_point, destinations=list, weight=str):        
-        try:
+        try:           
             # Realizar pares para ejecutar dijkstra 
             routes = destinations + [starting_point]
             pairs = list(itertools.permutations(routes,2))
@@ -566,7 +566,7 @@ class DB_Queries:
             
             # Regresar la mejor ruta
             distances = distances.sort_values('Distance', ignore_index=True)
-            best_route = distances.head(1)
+            best_route = distances.head(5)
             return best_route
                             
         except Exception as e:
