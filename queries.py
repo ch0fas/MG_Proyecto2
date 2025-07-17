@@ -566,7 +566,7 @@ class DB_Queries:
             
             # Regresar la mejor ruta
             distances = distances.sort_values('Distance', ignore_index=True)
-            best_route = distances.head(5)
+            best_route = distances.head(1)
             return best_route
                             
         except Exception as e:
